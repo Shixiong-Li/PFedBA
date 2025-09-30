@@ -10,12 +10,12 @@ import os
 
 # FashionMnist
 #
-# transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,), (0.5,))])
-# trainset = torchvision.datasets.FashionMNIST(root='./data', train=True,download=True, transform=transform)
-# testset = torchvision.datasets.FashionMNIST(root='./data', train=False,download=True, transform=transform)
-# # Setup directory for train/test data
-# train_path = './data/train/fashionmnist_train.json'
-# test_path = './data/test/fashionmnist_test.json'
+transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,), (0.5,))])
+trainset = torchvision.datasets.FashionMNIST(root='./data', train=True,download=True, transform=transform)
+testset = torchvision.datasets.FashionMNIST(root='./data', train=False,download=True, transform=transform)
+# Setup directory for train/test data
+train_path = './data/train/fashionmnist_train.json'
+test_path = './data/test/fashionmnist_test.json'
 
 # CIFAR-10
 #
@@ -28,12 +28,12 @@ import os
 
 # Mnist
 #
-transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,), (0.5,))])
-trainset = torchvision.datasets.MNIST(root='./data', train=True,download=True, transform=transform)
-testset = torchvision.datasets.MNIST(root='./data', train=False,download=True, transform=transform)
-# Setup directory for train/test data
-train_path = '../Mnist/data/train/mnist_train.json'
-test_path = '../Mnist/data/test/mnist_test.json'
+# transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,), (0.5,))])
+# trainset = torchvision.datasets.MNIST(root='./data', train=True,download=True, transform=transform)
+# testset = torchvision.datasets.MNIST(root='./data', train=False,download=True, transform=transform)
+# # Setup directory for train/test data
+# train_path = '../Mnist/data/train/mnist_train.json'
+# test_path = '../Mnist/data/test/mnist_test.json'
 
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=len(trainset.data),shuffle=False)
 testloader = torch.utils.data.DataLoader(testset, batch_size=len(testset.data),shuffle=False)
@@ -103,8 +103,9 @@ print("IDX1:", idx)  # counting samples for each labels
 #     props/np.sum(props, (1, 2), keepdims=True)
 fenpei=[]
 
+# Dir-Based Non-IID
 for n in range(10):
-    sampled_probabilities = len(mnist_data[n]) * np.random.dirichlet(np.array(NUM_USERS * [99999999]))
+    sampled_probabilities = len(mnist_data[n]) * np.random.dirichlet(np.array(NUM_USERS * [0.5]))
     print(sampled_probabilities)
     image_nums = []
     for user in trange(NUM_USERS):
