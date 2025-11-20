@@ -237,6 +237,8 @@ class pFedMe(Server):
                 self.Flshield_Aggregate()
             elif self.defense == 'flame':
                 self.Flame_Aggregate()
+            elif self.defense == 'earlyshield':
+                self.EarlyShield_Aggregate()
             else:
                 raise ValueError("defense name wrong!")
 
