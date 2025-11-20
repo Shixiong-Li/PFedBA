@@ -12,7 +12,7 @@ python main.py --dataset FashionMnist \
                --learning_rate 0.1 \
                --numusers 10 \
                --local_epochs 20 \
-               --num_global_iters 150 \
+               --num_global_iters 200 \
                --algorithm pFedMe \
                --per_epoch 1 \
                --poisoning_per_batch 16 \
