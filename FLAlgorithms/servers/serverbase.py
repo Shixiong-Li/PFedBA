@@ -63,7 +63,6 @@ import torch
 from scipy.fftpack import dct
 from hdbscan import HDBSCAN
 
-
 def flatten_weights(weights_dict):
     """Convert a dictionary of tensors into a single flattened numpy array."""
     flattened_weights = []
@@ -222,6 +221,10 @@ def get_update(update, model):
         update2[key] = update[key] - model[key]
     return update2
 
+"""
+ Geminiguard
+ Adapted from https://github.com/xingyushu/GeminiGuard/blob/main/utils/defense.py
+"""
 def Geminiguard(w_updates, w_locals_dict, net, central_dataset, dataset_test, global_parameters, iter,
                 malicious_list, device, tau, attack_label, local_bs, plr_class):
     timings = []  # To record timings for each step
@@ -363,7 +366,11 @@ def parameters_dict_to_vector_flt(net_dict) -> torch.Tensor:
             continue
         vec.append(param.view(-1))
     return torch.cat(vec)
-#original fltrust
+    
+"""
+ Fltrust
+ Adapted from https://github.com/zhmzm/Poisoning_Backdoor-critical_Layers_Attack/blob/main/utils/defense.py
+"""
 def fltrust(params, central_param, global_parameters, server_lr):
     FLTrustTotalScore = 0
     score_list = []
@@ -433,6 +440,10 @@ def compute_mmd(x, y):
     mmd = (torch.sum(xx_kernel) / (m * (m - 1))) + (torch.sum(yy_kernel) / (n * (n - 1))) - (2 * torch.sum(xy_kernel) / (m * n))
     return mmd
 
+"""
+ Flare
+ Adapted from https://github.com/zhmzm/Poisoning_Backdoor-critical_Layers_Attack/blob/main/utils/defense.py
+"""
 def flare(w_updates, w_locals, net, central_dataset, dataset_test, global_parameters, device, attack_label, local_bs):
     w_feature = []
     temp_model = copy.deepcopy(net)
@@ -484,6 +495,10 @@ def flare(w_updates, w_locals, net, central_dataset, dataset_test, global_parame
                 w_avg[k] = w_avg[k].long() + w_updates[i][k] * trust_score[i]
     return w_avg
 
+"""
+ Flshield
+ Adapted from https://github.com/nazifa24/NIID-Bench-project/blob/main/defense.py
+"""
 # -------------------------
 # Evaluation helper
 # -------------------------
@@ -583,6 +598,10 @@ def no_defence_balance(params, global_parameters):
 
     return global_parameters
 
+"""
+ Flame
+ Adapted from https://github.com/zhmzm/Poisoning_Backdoor-critical_Layers_Attack/blob/main/utils/defense.py
+"""
 def flame(local_model, update_params, global_model, wrong_mal, right_ben, turn, noise, debug=False):
     cos = torch.nn.CosineSimilarity(dim=0, eps=1e-6).cuda()
     cos_list = []
@@ -840,7 +859,136 @@ class Server:
                 new_value = result_params[offset:offset + new_size]
                 server_param.data[:] = new_value.clone().detach().reshape(server_param.shape)
                 offset += new_size
+        """
+        Our defense
+        """
+        
+        def EarlyShield_Aggregate(self):
+        # Optional: orthogonalization Function
+        def orthogonalize_updates(update_params, client_idx_list, alpha=0.5, eps=1e-12):
+            if len(client_idx_list) <= 1:
+                return
 
+            mean_update = {}
+            keys = [k for k in update_params[0] if 'num_batches_tracked' not in k]
+            for k in keys:
+                stacked = []
+                for idx in client_idx_list:
+                    stacked.append(update_params[idx][k].float())
+                mean_update[k] = torch.mean(torch.stack(stacked, dim=0), dim=0)
+
+            mean_norm_sq = 0.0
+            for k in keys:
+                mean_norm_sq += torch.sum(mean_update[k] * mean_update[k]).item()
+            if mean_norm_sq < eps:
+                return
+
+            for idx in client_idx_list:
+                numer = 0.0
+                for k in keys:
+                    numer += torch.sum(update_params[idx][k].float() * mean_update[k]).item()
+                proj = numer / (mean_norm_sq + eps)  # scalar
+                if abs(proj) < 1e-9:
+                    continue
+                for k in keys:
+                    orig = update_params[idx][k]
+                    sub = (alpha * proj) * mean_update[k].to(orig.device).type(orig.dtype)
+                    update_params[idx][k] = orig - sub
+
+        def earlyshield(local_models, update_params, global_model, noise):
+
+            num_clients = len(local_models)
+
+            # 1. Client-Client Similarity
+            update_vectors = [parameters_dict_to_vector(up).detach().cpu() for up in update_params]
+            n = len(update_vectors)
+            similarity_matrix = torch.zeros((n, n))
+
+            for i in range(n):
+                for j in range(i + 1, n):
+                    sim = torch.cosine_similarity(update_vectors[i], update_vectors[j], dim=0).item()
+                    similarity_matrix[i, j] = sim
+                    similarity_matrix[j, i] = sim
+
+            mean_similarity = torch.mean(similarity_matrix, dim=1).numpy()
+
+            # 2. PCA Score
+            update_matrix = torch.stack(update_vectors).cpu().numpy()
+            pca = PCA(n_components=2)
+            reduced = pca.fit_transform(update_matrix)
+            center = np.mean(reduced, axis=0)
+            pca_distances = np.linalg.norm(reduced - center, axis=1)
+            pca_scores = 1 - (pca_distances / np.max(pca_distances))
+
+            # Select Top M & Top N (default value: M=N=8)
+            top_mean_similarity = set(
+                sorted(range(len(mean_similarity)), key=lambda i: mean_similarity[i], reverse=True)[:8])
+            top_pca_scores = set(sorted(range(len(pca_scores)), key=lambda i: pca_scores[i], reverse=True)[:8])
+            benign_clients = list(top_mean_similarity & top_pca_scores)
+
+            print(f"Selected benign clients: {benign_clients}")
+
+            norm_list = np.array([])
+            for i in range(num_clients):
+                norm_val = torch.norm(parameters_dict_to_vector(update_params[i]), p=2).item()
+                norm_list = np.append(norm_list, norm_val)
+
+            clip_value = np.median(norm_list)
+
+            for i in range(len(benign_clients)):
+                gama = clip_value / norm_list[i]
+                if gama < 1:
+                    for key in update_params[benign_clients[i]]:
+                        if key.split('.')[-1] == 'num_batches_tracked':
+                            continue
+                        update_params[benign_clients[i]][key] *= gama
+
+            # Optional: orthogonalization
+            orthogonalize_updates(update_params, benign_clients, alpha=0.5)
+
+            # 3.Clip
+            anomaly_scores = 1.0 - mean_similarity
+            anomaly_scores = (anomaly_scores - np.min(anomaly_scores)) / (np.ptp(anomaly_scores) + 1e-12)
+            decay_factors = 1.0 - 0.5 * anomaly_scores
+
+            # Print dacay factors
+            mean_similarities_benign = np.take(mean_similarity, benign_clients)
+            decay_factors_benign = np.take(decay_factors, benign_clients)
+            print(f"[Inter-Client Anomaly Decay] mean similarities: {mean_similarities_benign}")
+            print(f"[Inter-Client Anomaly Decay] applied decay factors: {decay_factors_benign}")
+
+            for idx, client_idx in enumerate(benign_clients):
+                for key in update_params[client_idx]:
+                    if key.split('.')[-1] == 'num_batches_tracked':
+                        continue
+                    update_params[client_idx][key] *= decay_factors[idx]
+
+            global_model = no_defence_balance([update_params[i] for i in benign_clients], global_model)
+
+            # Optional: add noise
+            for key, var in global_model.items():
+                if key.split('.')[-1] == 'num_batches_tracked':
+                    continue
+                temp = copy.deepcopy(var)
+                temp = temp.normal_(mean=0, std=noise * clip_value)
+                var += temp
+            return global_model
+
+        # Function Entrance
+        assert self.users is not None and len(self.users) > 0, "User list Empty"
+        w_glob = self.model.state_dict()
+        w_updates = []
+        w_client = []
+
+        for i, user in enumerate(self.selected_users):
+            w = user.model.state_dict()
+            w_client.append(w)
+            w_updates.append(get_update(w, w_glob))
+
+        w_glob = earlyshield(local_models=w_client, update_params=w_updates, global_model=w_glob,
+                             noise=self.noise)
+        self.model.load_state_dict(w_glob)
+        
     def Geminiguard_Aggregate(self, glob_iter):
         assert self.users is not None and len(self.users) > 0, "用户列表为空"
         w_glob = self.model.state_dict()
