@@ -221,6 +221,8 @@ class FedProx(Server):
                 self.Flare_Aggregate()
             elif self.defense == 'flshield':
                 self.Flshield_Aggregate()
+            elif self.defense == 'earlyshield':
+                self.EarlyShield_Aggregate()
             else:
                 raise ValueError("defense name wrong!")
 
@@ -231,3 +233,4 @@ class FedProx(Server):
         self.save_model()  # 保存训练完的全局模型
 
         return optimized_trigger_list
+
