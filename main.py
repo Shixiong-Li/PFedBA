@@ -194,7 +194,7 @@ if __name__ == "__main__":
     parser.add_argument("--oneshot", type=int, default=0, help="one shot attack", choices=[1, 0])
     parser.add_argument("--clip_rate", type=int, default=0, help="one shot attack scale")
     parser.add_argument("--defense", type=str, default='none', help="defense method",
-                        choices=['none', 'mkrum', 'trim', 'geminiguard', 'fltrust', 'flare', 'flshield','flame'])
+                        choices=['none', 'mkrum', 'trim', 'geminiguard', 'fltrust', 'flare', 'flshield','flame','earlyshield'])
 
     #parameters for geminiguard
     parser.add_argument('--server_dataset', type=int, default=100, help="number of dataset in server")
