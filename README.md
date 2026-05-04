@@ -35,7 +35,7 @@ python main.py --dataset FashionMnist \
 If you find the code useful in your research, please consider citing our paper:
 
 ```
- @inproceedings{li2025earlyshield,
+ @inproceedings{li2026earlyshield,
    title={EarlyShield: Early-Stage Screening for Robust Personalized Federated Learning},
    author={Li, Shixiong and Lyu, Xingyu and Wang, Ning and Li, Tao and Chen, Danjue and Hu, Yidan and Chen, Yimin},
    booktitle={Pacific-Asia Conference on Knowledge Discovery and Data Mining},
