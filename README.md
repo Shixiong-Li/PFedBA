@@ -12,9 +12,10 @@ Will released if published
 
 ## Installation
 Install Pytorch
-## Generate dataset
+## Running
+### Generate dataset
 Run PFedBA/data/FashionMnist/generate_niid_20users.py
-## Run Experiments
+### Run Experiments
 - run experiments for the Fashion-MNIST dataset:
   
 python main.py --dataset FashionMnist \
