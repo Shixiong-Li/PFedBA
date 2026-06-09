@@ -8,7 +8,7 @@ To address these limitations, we propose EarlyShield, an effective and data-free
 Extensive experiments on various datasets across independent and identically distributed (IID) and non-IID settings show that EarlyShield reduces attack success rates with minimal accuracy drop, consistently outperforming existing defenses. We open source the code as well.
 
 ## Full paper link:
-Will released if published
+https://link.springer.com/chapter/10.1007/978-981-92-1462-4_15
 
 ## Installation
 Install Pytorch
@@ -36,11 +36,12 @@ If you find the code useful in your research, please consider citing our paper:
 
 ```
  @inproceedings{li2026earlyshield,
-   title={EarlyShield: Early-Stage Screening for Robust Personalized Federated Learning},
-   author={Li, Shixiong and Lyu, Xingyu and Wang, Ning and Li, Tao and Chen, Danjue and Hu, Yidan and Chen, Yimin},
-   booktitle={Pacific-Asia Conference on Knowledge Discovery and Data Mining},
-   year={2026},
-   organization={Springer}
+  title={EarlyShield: Early-Stage Screening for Robust Personalized Federated Learning},
+  author={Li, Shixiong and Lyu, Xingyu and Wang, Ning and Li, Tao and Chen, Danjue and Hu, Yidan and Chen, Yimin},
+  booktitle={Pacific-Asia Conference on Knowledge Discovery and Data Mining},
+  pages={184--196},
+  year={2026},
+  organization={Springer}
 }
 ```
         
